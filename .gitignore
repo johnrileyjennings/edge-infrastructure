@@ -1,0 +1,42 @@
+# ==========================================
+# 1. Kubernetes & Cluster Security (CRITICAL)
+# ==========================================
+# Never commit your admin access tokens or cluster credentials
+*kubeconfig*
+*.kube/config
+k3s.yaml
+
+# ==========================================
+# 2. Plain-Text Secrets & Environment Variables
+# ==========================================
+# General environment files containing unencrypted keys
+.env
+.env.*
+*.env
+*.secret
+*.key
+*.pem
+
+# If you use Mozilla SOPS for encryption, ignore unencrypted backups
+*.decrypted.*
+
+# ==========================================
+# 3. Development Tools & IDEs
+# ==========================================
+# Visual Studio Code settings
+.vscode/
+!.vscode/extensions.json
+
+# IntelliJ / JetBrains IDEs
+.idea/
+
+# OS-specific clutter
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# 4. Runtime Logs & Temporary Diagnostics
+# ==========================================
+*.log
+tmp/
+dist/
