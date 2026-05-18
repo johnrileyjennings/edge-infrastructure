@@ -1,0 +1,26 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: host-infra-source
+  namespace: flux-system
+spec:
+  interval: 1m0s # How often Flux checks GitHub for new commits
+  url: https://github.com/johnrileyjennings/edge-infrastructure.git
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system # Uses the secure deploy key generated during bootstrap
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-manifests-sync
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./k3s-manifests # <-- Tells Flux to scan the manifests folder
+  prune: true            # Automatically deletes resources in K3s if removed from Git
+  sourceRef:
+    kind: GitRepository
+    name: host-infra-source
+  targetNamespace: default
