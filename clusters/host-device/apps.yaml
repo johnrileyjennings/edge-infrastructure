@@ -29,4 +29,3 @@ spec:
     provider: sops
     secretRef:
       name: sops-age # The cluster secret containing the keys.txt file
-      namespace: flux-system
