@@ -1,6 +1,6 @@
 # Edge-Infrastructure
 
-Welcome to my completely declarative infrastructure repository. This repository acts as the single source of truth for my multi-node K3s Kubernetes cluster, managed completely via **Flux v2** (GitOps) and secured using **SOPS + Age** encryption.
+This repository acts as the single source of truth for my multi-node K3s Kubernetes cluster, managed completely via **Flux v2** (GitOps) and secured using **SOPS + Age** encryption.
 
 ---
 
