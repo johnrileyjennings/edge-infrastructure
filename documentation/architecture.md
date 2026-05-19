@@ -1,4 +1,4 @@
-# 🗺️ Network & Hardware Architecture
+# Network & Hardware Architecture
 
 PLACEHOLDER TEMPLATE FOR IMPLEMENTATION LATER
 
@@ -6,18 +6,18 @@ This document tracks the physical hardware layout, network segmentation, and rou
 
 ---
 
-## 🔌 Physical Hardware Topology
+## Physical Hardware Topology
 
 | Node Name | Hostname | Hardware Specs | Role | IP Address |
 | :--- | :--- | :--- | :--- | :--- |
 | **Control Plane 1** | `k3shost` | [e.g., Mini PC / Custom Build Specs] | K3s Master / API Server | `192.168.1.X` |
 | **Worker Node 1**   | `k3sworker1`| [e.g., Specs] | Workload Execution | `192.168.1.X` |
 
-> 📌 **Future Hardware Roadmap:** Transition current compute hosts into a standardized, unified 10-inch server rack enclosure to optimize airflow, power distribution, and cable management.
+> **Future Hardware Roadmap:** Transition current compute hosts into a standardized, unified 10-inch server rack enclosure to optimize airflow, power distribution, and cable management.
 
 ---
 
-## 🎛️ Network Segmentation (pfSense & VLANs)
+## Network Segmentation (pfSense & VLANs)
 
 The network is compartmentalized using a pfSense firewall to isolate cluster traffic from standard home traffic.
 
@@ -28,7 +28,7 @@ The network is compartmentalized using a pfSense firewall to isolate cluster tra
 
 ---
 
-## 🔀 Traffic Ingress & Edge Routing Flow
+## Traffic Ingress & Edge Routing Flow
 
 External traffic resolves securely without opening dangerous inbound ports on the local firewall:
 
