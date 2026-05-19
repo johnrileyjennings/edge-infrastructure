@@ -7,32 +7,21 @@
 k3s.yaml
 
 # ==========================================
-# 2. Plain-Text Secrets & Environment Variables
+# 2. Local Secret files & Raw token exports
 # ==========================================
-# General environment files containing unencrypted keys
-.env
-.env.*
-*.env
-*.secret
-*.key
-*.pem
+*.dec.yaml
+*.decrypted.yaml
+*secret.raw.yaml
+.decrypted/
+cleartext-*
+*.bak
+*.tmp
 
-# If you use Mozilla SOPS for encryption, ignore unencrypted backups
-*.decrypted.*
-
-# ==========================================
-# 3. Development Tools & IDEs
-# ==========================================
-# Visual Studio Code settings
-.vscode/
-!.vscode/extensions.json
-
-# IntelliJ / JetBrains IDEs
-.idea/
-
-# OS-specific clutter
-.DS_Store
-Thumbs.db
+#===========================================
+# 3. SOPS Age private key explicit
+#===========================================
+keys.txt
+*.agekey
 
 # ==========================================
 # 4. Runtime Logs & Temporary Diagnostics
@@ -40,6 +29,13 @@ Thumbs.db
 *.log
 tmp/
 dist/
-.config/
-.config/
-.config/
+
+#============================================
+# 5. OS & Editor Overhead
+#============================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
