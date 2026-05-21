@@ -1,0 +1,44 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+spec:
+  interval: 2h
+  url: https://kubernetes.github.io/dashboard/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: kubernetes-dashboard
+      version: "7.10.0"
+      sourceRef:
+        kind: HelmRepository
+        name: kubernetes-dashboard
+        namespace: kubernetes-dashboard
+  values:
+    nginx:
+      enabled: false
+    cert-manager:
+      enabled: false
+
+    # 1. Force all Dashboard sub-components to run exclusively on the Pi worker
+    global:
+      nodeSelector:
+        kubernetes.io/hostname: rasppi
+
+    # 2. Expose the UI securely via your domain
+    api-ingress:
+      enabled: true
+      hosts:
+        - dashboard.eternallyzer0.com
+      ingressClassName: traefik # Interfaces natively with your default K3s Traefik ingress
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
