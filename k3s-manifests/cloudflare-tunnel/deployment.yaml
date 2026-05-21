@@ -13,6 +13,8 @@ spec:
       labels:
         app: cloudflared
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: rasppi # Tells Cloudflared to run on RaspPi worker node
       containers:
       - name: cloudflared
         image: cloudflare/cloudflared:latest
