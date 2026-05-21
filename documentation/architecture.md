@@ -10,8 +10,8 @@ This document tracks the physical hardware layout, network segmentation, and rou
 
 | Node Name | Hostname | Hardware Specs | Role | IP Address |
 | :--- | :--- | :--- | :--- | :--- |
-| **Control Plane 1** | `k3shost` | [e.g., Mini PC / Custom Build Specs] | K3s Master / API Server | `192.168.1.X` |
-| **Worker Node 1**   | `k3sworker1`| [e.g., Specs] | Workload Execution | `192.168.1.X` |
+| **Control Plane 1** | `k3shost` | Lenovo Thinkstation P3 Tiny Intel x86 | K3s Master / API Server | `10.86.86.3` |
+| **Worker Node 1**   | `RaspPi`| Raspberry Pi 5 2GB ARM64 | Workload Execution | `10.86.86.2` |
 
 > **Future Hardware Roadmap:** Transition current compute hosts into a standardized, unified 10-inch server rack enclosure to optimize airflow, power distribution, and cable management.
 
