@@ -6,10 +6,11 @@ A running inventory of all services currently deployed and managed via the GitOp
 
 ## Core Infrastructure Services
 
-| Service Name | Namespace | Status | Internal Endpoint | External Access | Storage Type |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Cloudflare Tunnel** | `cloudflare` | 🟢 Active | ClusterIP / Internal | Outbound Edge Agent | Stateless |
-| **Vaultwarden** | `security` | ⏳ Planned | `vaultwarden.flux-system...` | `vault.eternallyzer0.com` | PVC (Local Path) |
+| Service Name | Namespace | Status | External Access | Storage Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Cloudflare Tunnel** | `cloudflare` | 🟢 Active | Outbound Edge Agent | Stateless |
+| **HeadLamp** | `kubernetes-dashboard` | 🟢 Active | `dashboard.eternallyzer0.com` | Stateless |
+| **Vaultwarden** | `security` | ⏳ Planned | `vault.eternallyzer0.com` | PVC (Local Path) |
 
 ---
 
