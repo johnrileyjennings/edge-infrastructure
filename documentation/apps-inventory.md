@@ -9,7 +9,7 @@ A running inventory of all services currently deployed and managed via the GitOp
 | Service Name | Namespace | Status | External Access | Storage Type |
 | :--- | :--- | :--- | :--- | :--- |
 | **Cloudflare Tunnel** | `cloudflare` | 🟢 Active | Outbound Edge Agent | Stateless |
-| **HeadLamp** | `kubernetes-dashboard` | 🟢 Active | `dashboard.eternallyzer0.com` | Stateless |
+| **HeadLamp** | `kubernetes-dashboard` | 🟢 Active | `lamp.eternallyzer0.com` | Stateless |
 | **Vaultwarden** | `security` | ⏳ Planned | `vault.eternallyzer0.com` | PVC (Local Path) |
 
 ---
