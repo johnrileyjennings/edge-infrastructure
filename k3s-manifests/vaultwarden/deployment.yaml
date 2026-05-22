@@ -33,6 +33,11 @@ spec:
           ports:
             - containerPort: 80
               name: http
+          env:
+            - name: SIGNUPS_ALLOWED
+              vaule: "false"
+            - name: WEBSOCKET_ENABLED
+              vaule: "true"
           volumeMounts:
             - mountPath: /data
               name: data
