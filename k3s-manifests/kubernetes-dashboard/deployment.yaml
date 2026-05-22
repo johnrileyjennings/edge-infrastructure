@@ -31,7 +31,7 @@ spec:
     ingress:
       enabled: true
       hosts:
-        - host: dashboard.eternallyzer0.com
+        - host: lamp.eternallyzer0.com
           paths:
             - path: /
               type: ImplementationSpecific
