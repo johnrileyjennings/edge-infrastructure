@@ -19,16 +19,23 @@ This repository acts as the single source of truth for my multi-node K3s Kuberne
 ```text
 .
 ├── .gitignore
-├── clusters/                # Flux system bootstrap targets
-|   ├── host-device          # VM Running Ubuntu Server 24.04.4
-|   └── RaspPi1-edge         # Raspberry Pi unit 1 edge device (Not emplemented)
-├── documentaion             # Internal Documentation
-|   ├── apps-inventory.md    # Active cluster services, URLs, and States
-|   └── architecture.md      # Netowrk Topology, hardware specificatioins
-└── k3s-manifests/           # Core cluster workloads
-    ├── namespace.yaml       # Core namespace definitions
-    ├── kustomization.yaml   # Root kustomize routing
-    └── cloudflare-tunnel/   # Cloudflare edge connector stack
+├── clusters/                     # Flux system bootstrap targets
+|   ├── host-device               # VM Running Ubuntu Server 24.04.4
+|   └── RaspPi1-edge              # Raspberry Pi unit 1 edge device (Not emplemented)
+├── documentaion                  # Internal Documentation
+|   ├── apps-inventory.md         # Active cluster services, URLs, and States
+|   └── architecture.md           # Netowrk Topology, hardware specificatioins
+└── k3s-manifests/                # Core cluster workloads
+    ├── namespace.yaml            # Core namespace definitions
+    ├── kustomization.yaml        # Root kustomize routing
+    ├── vaultwarden               # Vaultwarden password manager
+    |   ├── deployment.yaml
+    |   └── kustomization.yaml
+    ├── kubernetes-dashboard      # Headlamp dashboard
+    |   ├── deployment.yaml
+    |   ├── deployment-admin.yaml # Declares user-admin for login token generation
+    |   └── kustomization.yaml
+    └── cloudflare-tunnel/        # Cloudflare edge connector stack
         ├── deployment.yaml
         ├── kustomization.yaml
-        └── secret.enc.yaml  # SOPS encrypted tunnel token
+        └── secret.enc.yaml       # SOPS encrypted tunnel token
