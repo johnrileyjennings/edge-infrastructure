@@ -69,7 +69,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: vault.eternallyzer0.com
+    - host: ${vault_sub}.${root_domain}
       http:
         paths:
           - path: /

@@ -31,7 +31,7 @@ spec:
     ingress:
       enabled: true
       hosts:
-        - host: lamp.eternallyzer0.com
+        - host: ${lamp_sub}.${root_domain}
           paths:
             - path: /
               type: ImplementationSpecific

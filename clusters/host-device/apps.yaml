@@ -28,3 +28,8 @@ spec:
     provider: sops
     secretRef:
       name: sops-age # The cluster secret containing the keys.txt file
+# --- ADDED FOR DOMAIN SUBSTITUTION ---
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-domains # The cluster secret containing domain names
