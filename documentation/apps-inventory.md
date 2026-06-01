@@ -9,9 +9,9 @@ A running inventory of all services currently deployed and managed via the GitOp
 | Service Name | Namespace | Status | External Access | Storage Type |
 | :--- | :--- | :--- | :--- | :--- |
 | **Cloudflare Tunnel** | `cloudflare` | 🟢 Active | Outbound Edge Agent | Stateless |
-| **HeadLamp** | `kubernetes-dashboard` | 🟢 Active | `lamp.eternallyzer0.com` | Stateless |
-| **Vaultwarden** | `security` | 🟢 Active | `vault.eternallyzer0.com` | PVC (vaultwarden-data) |
-| **AdGuard Home** | `dns` | ⏳ Planned | `adguard.eternallyzer0.com` | PVC (adguard-data) |
+| **HeadLamp** | `kubernetes-dashboard` | 🟢 Active | `lamp.mydomain.com` | Stateless |
+| **Vaultwarden** | `security` | 🟢 Active | `vault.mydomain.com` | PVC (vaultwarden-data) |
+| **AdGuard Home** | `dns` | ⏳ Planned | `adguard.mydomain.com` | PVC (adguard-data) |
 
 ---
 
