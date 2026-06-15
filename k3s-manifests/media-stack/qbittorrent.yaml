@@ -3,8 +3,12 @@ kind: Deployment
 metadata:
   name: qbittorrent
   namespace: media
+  labels:
+    app: qbittorrent
 spec:
   replicas: 1
+  strategy:
+    type: Recreate # Clean teardown prevents dead volume state loops across restarts
   selector:
     matchLabels:
       app: qbittorrent
@@ -14,41 +18,42 @@ spec:
         app: qbittorrent
     spec:
       nodeSelector:
-        kubernetes.io/hostname: k3shost # Set working node to master control plane
+        kubernetes.io/hostname: k3shost
       containers:
-        # --- CONTAINER 1: GLUETUN CUSTOM WIREGUARD ---
+        # --- CONTAINER 1: GLUETUN CUSTOM WIREGUARD VPN GATEWAY ---
         - name: gluetun
           image: qmcgaw/gluetun:latest
+          imagePullPolicy: IfNotPresent
           securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
             allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_ADMIN # Mandatory for container-level routing & iptables management
           ports:
             - containerPort: 8080
-              name: webui
+              name: webui # Exposed endpoint targeted by the Kubernetes Service
           env:
-            - name: WIREGUARD_PERSISTENT_KEEPALIVE
-              value: "25" # keeps pfSense firewall UDP states alive
-            - name: HTTP_CONTROL_SERVER_ADDRESS
-              value: ":8000"
             - name: VPN_SERVICE_PROVIDER
               value: "custom"
             - name: VPN_TYPE
               value: "wireguard"
             - name: FIREWALL
               value: "on"
-            # Allows local cluster traffic and home LAN routing to access the interface
+            # Explicitly open inbound paths for local cluster tracking and home networking
             - name: FIREWALL_OUTBOUND_SUBNETS
               value: "10.42.0.0/16,10.43.0.0/16,10.86.86.0/24"
+            # Open direct local firewall holes for the application runtime listener
             - name: FIREWALL_INPUT_PORTS
               value: "8080"
-            # Enable native NAT-PMP port forwarding
-            - name: VPN_PORT_FORWARDING
-              value: "on"
-            - name: VPN_PORT_FORWARDING_PROVIDER
-              value: "protonvpn"
-            # Pull keys dynamically from protonvpn-wg secret
+            # Whispers to the ProtonVPN endpoint every 25s to stop pfSense from dropping the UDP state entry
+            - name: WIREGUARD_PERSISTENT_KEEPALIVE
+              value: "25"
+            # Explicit management interface definition to prevent random fallback binding collisions
+            - name: HTTP_CONTROL_SERVER_ADDRESS
+              value: ":8000"
+            # Modern environment parameters to suppress standard startup engine validation errors
             - name: WIREGUARD_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
@@ -64,23 +69,28 @@ spec:
                 secretKeyRef:
                   name: protonvpn-wg
                   key: public_key
-            - name: VPN_ENDPOINT_IP
+            - name: WIREGUARD_ENDPOINT_IP
               valueFrom:
                 secretKeyRef:
                   name: protonvpn-wg
                   key: endpoint_ip
-            - name: VPN_ENDPOINT_PORT
+            - name: WIREGUARD_ENDPOINT_PORT
               valueFrom:
                 secretKeyRef:
                   name: protonvpn-wg
                   key: endpoint_port
+            - name: VPN_PORT_FORWARDING
+              value: "on"
+            - name: VPN_PORT_FORWARDING_PROVIDER
+              value: "protonvpn"
           volumeMounts:
             - mountPath: /tmp/gluetun
               name: shared-gluetun-data
 
-        # --- CONTAINER 2: QBITTORRENT WITH AUTO-PORT UPDATE ---
+        # --- CONTAINER 2: QBITTORRENT CLIENT ---
         - name: qbittorrent
           image: linuxserver/qbittorrent:latest
+          imagePullPolicy: IfNotPresent
           env:
             - name: PUID
               value: "1000"
@@ -89,16 +99,15 @@ spec:
             - name: TZ
               value: "America/New_York"
             - name: WEBUI_PORT
-              value: "8080"
+              value: "8080" # Binds directly to localhost:8080 inside the shared pod network
           volumeMounts:
             - mountPath: /config
               name: qbit-config
             - mountPath: /data
-              name: media-storage # Mounted to 1TB drive
+              name: media-storage
             - mountPath: /tmp/gluetun
               name: shared-gluetun-data
               readOnly: true
-          # This internal shell command runs alongside booting to watch the port file
           lifecycle:
             postStart:
               exec:
@@ -111,65 +120,19 @@ spec:
                     while true; do
                       PORT=$(cat /tmp/gluetun/forwarded_port)
                       if [ ! -z "$PORT" ]; then
-                        # Uses qBittorrent API to set listening port dynamically
                         curl -s -X POST "http://localhost:8080/api/v2/app/setPreferences" --data-urlencode "json={\"listen_port\":$PORT}"
                       fi
                       sleep 300
                     done
                     ) >/dev/null 2>&1 &
+
+      # --- SHARED VOLUMES DECLARATION ---
       volumes:
+        - name: shared-gluetun-data
+          emptyDir: {} # Ephemeral memory pool holding the active 'forwarded_port' reference
         - name: qbit-config
           persistentVolumeClaim:
             claimName: qbit-config-pvc
-        - name: shared-gluetun-data
-          emptyDir: {} # Temporary in-memory bridge between containers
         - name: media-storage
-          hostPath:
-            path: /mnt/media-storage/data # Points straight to the 1TB physical disk mount
-            type: Directory
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: qbit-config-pvc
-  namespace: media
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: qbittorrent
-  namespace: media
-spec:
-  ports:
-    - port: 8080
-      targetPort: 8080
-      name: webui
-  selector:
-    app: qbittorrent
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: qbittorrent
-  namespace: media
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-spec:
-  ingressClassName: traefik
-  rules:
-    - host: qbit.${root_domain}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: qbittorrent
-                port:
-                  number: 8080
+          persistentVolumeClaim:
+            claimName: media-storage-pvc
