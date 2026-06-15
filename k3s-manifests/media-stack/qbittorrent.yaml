@@ -41,6 +41,8 @@ spec:
             # Allows local cluster traffic and home LAN routing to access the interface
             - name: FIREWALL_OUTBOUND_SUBNETS
               value: "10.42.0.0/16,10.43.0.0/16,10.86.86.0/24"
+            - name: FIREWALL_INPUT_PORTS
+              value: "8080"
             # Enable native NAT-PMP port forwarding
             - name: VPN_PORT_FORWARDING
               value: "on"
