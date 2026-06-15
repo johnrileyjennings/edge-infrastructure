@@ -100,6 +100,8 @@ spec:
               value: "America/New_York"
             - name: WEBUI_PORT
               value: "8080" # Binds directly to localhost:8080 inside the shared pod network
+            - name: RE_CHOWN
+              value: "false"
           volumeMounts:
             - mountPath: /config
               name: qbit-config
