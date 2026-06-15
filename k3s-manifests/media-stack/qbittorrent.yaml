@@ -23,7 +23,7 @@ spec:
             capabilities:
               add:
                 - NET_ADMIN
-            allowPrivilageEscalation: true
+            allowPrivilegeEscalation: true
           ports:
             - containerPort: 8080
               name: webui
@@ -100,6 +100,7 @@ spec:
                   - /bin/sh
                   - -c
                   - |
+                    (
                     while [ ! -f /tmp/gluetun/forwarded_port ]; do sleep 2; done;
                     while true; do
                       PORT=$(cat /tmp/gluetun/forwarded_port)
@@ -108,7 +109,8 @@ spec:
                         curl -s -X POST "http://localhost:8080/api/v2/app/setPreferences" --data-urlencode "json={\"listen_port\":$PORT}"
                       fi
                       sleep 300
-                    done &
+                    done
+                    ) >/dev/null 2>&1 &
       volumes:
         - name: qbit-config
           persistentVolumeClaim:
