@@ -1,0 +1,168 @@
+# --- 1. PERSISTENT STORAGE FOR APPLICATION CONFIG ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbit-config-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  # Allocation for resume files and fast resume states
+  storageClassName: local-path  # Uses K3s built-in local path storage
+
+---
+# --- 2. MULTI-CONTAINER POD DEPLOYMENT ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  namespace: media
+  labels:
+    app: qbittorrent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Terminates old pod before starting new one to release volume locks
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3shost  # Ensures it mounts to the correct physical host node
+      containers:
+        
+        # --- CONTAINER A: GLUETUN VPN GATEWAY ---
+        - name: gluetun
+          image: qmcgaw/gluetun:latest
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_ADMIN  # Gives Gluetun rights to manipulate container routing tables
+          ports:
+            - containerPort: 8080
+              name: webui
+          env:
+            - name: VPN_SERVICE_PROVIDER
+              value: "custom"
+            - name: VPN_TYPE
+              value: "wireguard"
+            - name: FIREWALL
+              value: "on"
+            # Whitelist internal K3s cluster CIDRs
+            - name: FIREWALL_OUTBOUND_SUBNETS
+              value: "10.42.0.0/16,10.43.0.0/16"
+            # Asymmetric routing fix: allows Traefik ingress to bypass VPN return paths
+            - name: FIREWALL_OUTBOUND_SUBNETS_PROXY
+              value: "10.42.0.0/16,10.43.0.0/16,10.86.86.0/16"
+            - name: FIREWALL_INPUT_PORTS
+              value: "8080"
+            # Prevents state timeouts over UDP connections
+            - name: WIREGUARD_PERSISTENT_KEEPALIVE
+              value: "25"
+            - name: HTTP_CONTROL_SERVER_ADDRESS
+              value: ":8000"
+            # Dynamically map the SOPS-encrypted ProtonVPN secret keys
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: protonvpn-wg
+                  key: private_key
+            - name: WIREGUARD_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: protonvpn-wg
+                  key: addresses
+            - name: WIREGUARD_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: protonvpn-wg
+                  key: public_key
+            - name: WIREGUARD_ENDPOINT_IP
+              valueFrom:
+                secretKeyRef:
+                  name: protonvpn-wg
+                  key: endpoint_ip
+            - name: WIREGUARD_ENDPOINT_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: protonvpn-wg
+                  key: endpoint_port
+            - name: VPN_PORT_FORWARDING
+              value: "on"
+            - name: VPN_PORT_FORWARDING_PROVIDER
+              value: "protonvpn"
+          volumeMounts:
+            - mountPath: /tmp/gluetun
+              name: shared-gluetun-data
+
+        # --- CONTAINER B: QBITTORRENT CLIENT ---
+        - name: qbittorrent
+          image: linuxserver/qbittorrent:5.1.4  # Pinned release to ensure absolute stability
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "America/New_York"
+            - name: WEBUI_PORT
+              value: "8080"
+          volumeMounts:
+            - mountPath: /config
+              name: qbit-config
+            - mountPath: /data
+              name: media-storage  # Bound directly to the 1TB storage drive
+            - mountPath: /tmp/gluetun
+              name: shared-gluetun-data
+              readOnly: true
+          # Sidecar lifecycle script: Automates port-forward updates from Gluetun back to qBit
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    (
+                    while [ ! -f /tmp/gluetun/forwarded_port ]; do sleep 2; done;
+                    while true; do
+                      PORT=$(cat /tmp/gluetun/forwarded_port)
+                      if [ ! -z "$PORT" ]; then
+                        curl -s -X POST "http://localhost:8080/api/v2/app/setPreferences" --data-urlencode "json={\"listen_port\":$PORT}"
+                      fi
+                      sleep 300
+                    done
+                    ) >/dev/null 2>&1 &
+
+      volumes:
+        - name: shared-gluetun-data
+          emptyDir: {}
+        - name: qbit-config
+          persistentVolumeClaim:
+            claimName: qbit-config-pvc
+        - name: media-storage
+          persistentVolumeClaim:
+            claimName: media-storage-pvc  # Maps to the pre-existing storage asset
+
+---
+# --- 3. CORE SERVICE CONNECTOR ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  namespace: media
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: qbittorrent
